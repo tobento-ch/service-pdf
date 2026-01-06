@@ -1,0 +1,31 @@
+<?php
+
+/**
+ * TOBENTO
+ *
+ * @copyright   Tobias Strub, TOBENTO
+ * @license     MIT License, see LICENSE file distributed with this source code.
+ * @author      Tobias Strub
+ * @link        https://www.tobento.ch
+ */
+
+declare(strict_types=1);
+
+namespace Tobento\Service\Pdf;
+
+interface TemplateInterface
+{
+    /**
+     * Returns the name.
+     *
+     * @return string
+     */
+    public function name(): string;
+    
+    /**
+     * Returns the data.
+     *
+     * @return array
+     */
+    public function data(): array;
+}
