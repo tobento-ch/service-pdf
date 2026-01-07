@@ -19,7 +19,8 @@ interface RendererInterface
      * Returns the evaluated content of the template rendered.
      *
      * @param TemplateInterface $template
+     * @param bool $withInlineCssStyles
      * @return string
      */
-    public function renderTemplate(TemplateInterface $template): string;
+    public function renderTemplate(TemplateInterface $template, bool $withInlineCssStyles = true): string;
 }
