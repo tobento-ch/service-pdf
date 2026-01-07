@@ -18,7 +18,7 @@ use Tobento\Service\Pdf\TemplateInterface;
 
 class FakeRenderer implements RendererInterface
 {
-    public function renderTemplate(TemplateInterface $template): string
+    public function renderTemplate(TemplateInterface $template, bool $withInlineCssStyles = true): string
     {
         return 'fake:' . $template->name();
     }
