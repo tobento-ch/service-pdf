@@ -166,7 +166,7 @@ $pdf = new Pdf()
     ->template(name: 'shop/invoice', data: []);
 ```
 
-**Templates**
+#### Templates
 
 Use the `template` method to render a named template with the renderer provided by the PDF generator, allowing you to generate structured and reusable PDF content.
 
@@ -176,9 +176,41 @@ use Tobento\Service\Pdf\Pdf;
 $pdf = new Pdf()->template(
     name: 'shop/invoice',
     data: [
+        'title' => 'Title',
         'items' => $items,
     ]
 );
+```
+
+**Example Template**
+
+```php
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title><?= $view->esc($title) ?></title>
+
+        <?php
+        // Render linked CSS only when inline styles are disabled:
+        if (!$withInlineCssStyles) {
+            echo $view->assets()->render();
+        }
+        ?>
+
+        <?php
+        // Add CSS assets (also works inside subviews):
+        $view->asset('pdf.css');
+        ?>
+    </head>
+    <body>
+        <?= $view->render('pdf/header') ?>
+
+        <h1><?= $view->esc($title) ?></h1>
+
+        <?= $view->render('pdf/footer') ?>
+    </body>
+</html>
 ```
 
 ### Headers and Footers
