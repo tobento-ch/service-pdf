@@ -1,6 +1,6 @@
 {
     "name": "tobento/service-pdf",
-    "version": "2.0",
+    "version": "2.0.1",
     "type": "library",
     "description": "A flexible and extensible PDF generation service built around clean interfaces and parameter objects.",
     "keywords": [
@@ -24,18 +24,19 @@
         "psr/http-message": "^2.0",
         "psr/http-factory": "^1.0",
         "mpdf/mpdf": "^8.2",
-        "tobento/service-autowire": "^2.0"
+        "tobento/service-autowire": "^2.0",
+        "tobento/service-view": "^2.0",
+        "tobento/service-filesystem": "^2.0",
+        "tijsverkoyen/css-to-inline-styles": "^2.3"
     },
     "suggest": {
-        "tobento/service-view": "Required for view renderer",
         "tobento/service-container": "May be used for LazyPdfGenerators"
     },
     "require-dev": {
         "phpunit/phpunit": "^12.3",
         "vimeo/psalm": "^6.13",
         "nyholm/psr7": "^1.8",
-        "tobento/service-container": "^2.0",
-        "tobento/service-view": "^2.0"
+        "tobento/service-container": "^2.0"
     },
     "autoload": {
         "psr-4": {
