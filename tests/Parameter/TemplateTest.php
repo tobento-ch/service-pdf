@@ -15,9 +15,11 @@ namespace Tobento\Service\Pdf\Test\Parameter;
 
 use JsonSerializable;
 use PHPUnit\Framework\TestCase;
+use Tobento\Service\Pdf\Parameter\Html;
 use Tobento\Service\Pdf\Parameter\Template;
 use Tobento\Service\Pdf\ParameterInterface;
 use Tobento\Service\Pdf\Template as BaseTemplate;
+use Tobento\Service\Pdf\TemplateAwareInterface;
 use Tobento\Service\Pdf\TemplateInterface;
 
 class TemplateTest extends TestCase
@@ -28,6 +30,7 @@ class TemplateTest extends TestCase
 
         $this->assertInstanceOf(ParameterInterface::class, $tpl);
         $this->assertInstanceOf(JsonSerializable::class, $tpl);
+        $this->assertInstanceOf(TemplateAwareInterface::class, $tpl);
     }
 
     public function testTemplateIsReturned()
@@ -75,5 +78,42 @@ class TemplateTest extends TestCase
 
         $this->assertSame($original->template()->name(), $restored->template()->name());
         $this->assertSame($original->template()->data(), $restored->template()->data());
+    }
+    
+    public function testTemplateMethodAlwaysReturnsTemplate()
+    {
+        $inner = new BaseTemplate('tpl', ['x' => 1]);
+        $tpl = new Template($inner);
+
+        $this->assertSame($inner, $tpl->template());
+    }
+
+    public function testWithRenderedHtmlReturnsHtmlParameter()
+    {
+        $tpl = new Template(new BaseTemplate('tpl', []));
+
+        $new = $tpl->withRenderedHtml('Rendered HTML');
+
+        $this->assertInstanceOf(ParameterInterface::class, $new);
+        $this->assertInstanceOf(Html::class, $new);
+        $this->assertSame('Rendered HTML', $new->html());
+    }
+
+    public function testWithRenderedHtmlReturnsNewInstance()
+    {
+        $tpl = new Template(new BaseTemplate('tpl', []));
+        $new = $tpl->withRenderedHtml('Rendered HTML');
+
+        $this->assertNotSame($tpl, $new);
+    }
+
+    public function testWithRenderedHtmlRemovesTemplate()
+    {
+        $tpl = new Template(new BaseTemplate('tpl', []));
+
+        $new = $tpl->withRenderedHtml('Rendered HTML');
+
+        $this->assertInstanceOf(Html::class, $new);
+        $this->assertSame('Rendered HTML', $new->html());
     }
 }
