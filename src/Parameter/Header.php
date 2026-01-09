@@ -17,12 +17,13 @@ use JsonSerializable;
 use Stringable;
 use Tobento\Service\Pdf\ParameterInterface;
 use Tobento\Service\Pdf\Template;
+use Tobento\Service\Pdf\TemplateAwareInterface;
 use Tobento\Service\Pdf\TemplateInterface;
 
 /**
  * Defines the PDF header html.
  */
-class Header implements ParameterInterface, JsonSerializable
+class Header implements ParameterInterface, JsonSerializable, TemplateAwareInterface
 {
     /**
      * Create a new Header instance.
@@ -41,6 +42,36 @@ class Header implements ParameterInterface, JsonSerializable
     public function html(): string|Stringable|TemplateInterface
     {
         return $this->html;
+    }
+    
+    /**
+     * Returns the template if present, otherwise null.
+     *
+     * @return null|TemplateInterface
+     */
+    public function template(): null|TemplateInterface
+    {
+        $html = $this->html();
+        
+        if ($html instanceof TemplateInterface) {
+            return $html;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Returns a new parameter instance containing the rendered HTML.
+     *
+     * Implementations may return a different parameter type,
+     * depending on how the rendered HTML should be represented.
+     *
+     * @param string $html The rendered HTML.
+     * @return ParameterInterface A new parameter instance holding the rendered HTML.
+     */
+    public function withRenderedHtml(string $html): ParameterInterface
+    {
+        return new static(html: $html);
     }
 
     /**

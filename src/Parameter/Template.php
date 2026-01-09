@@ -16,12 +16,13 @@ namespace Tobento\Service\Pdf\Parameter;
 use JsonSerializable;
 use Tobento\Service\Pdf\ParameterInterface;
 use Tobento\Service\Pdf\Template as Templ;
+use Tobento\Service\Pdf\TemplateAwareInterface;
 use Tobento\Service\Pdf\TemplateInterface;
 
 /**
  * Represents a template that will be rendered into HTML.
  */
-class Template implements ParameterInterface, JsonSerializable
+class Template implements ParameterInterface, JsonSerializable, TemplateAwareInterface
 {
     /**
      * Create a new instance.
@@ -37,9 +38,33 @@ class Template implements ParameterInterface, JsonSerializable
      *
      * @return TemplateInterface
      */
-    public function template(): TemplateInterface
+    public function getTemplate(): TemplateInterface
     {
         return $this->template;
+    }
+    
+    /**
+     * Returns the template if present, otherwise null.
+     *
+     * @return null|TemplateInterface
+     */
+    public function template(): null|TemplateInterface
+    {
+        return $this->getTemplate();
+    }
+
+    /**
+     * Returns a new parameter instance containing the rendered HTML.
+     *
+     * Implementations may return a different parameter type,
+     * depending on how the rendered HTML should be represented.
+     *
+     * @param string $html The rendered HTML.
+     * @return ParameterInterface A new parameter instance holding the rendered HTML.
+     */
+    public function withRenderedHtml(string $html): ParameterInterface
+    {
+        return new Html(html: $html);
     }
 
     /**
@@ -50,8 +75,8 @@ class Template implements ParameterInterface, JsonSerializable
     public function jsonSerialize(): array
     {
         return [
-            'name' => $this->template()->name(),
-            'data' => $this->template()->data(),
+            'name' => $this->getTemplate()->name(),
+            'data' => $this->getTemplate()->data(),
         ];
     }
     
