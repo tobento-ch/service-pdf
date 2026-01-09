@@ -33,6 +33,7 @@ The PDF service offers a set of interfaces for creating, streaming, and download
         - [Pdf Generator Factory - Mpdf](#pdf-generator-factory---mpdf)
     - [Learn More](#learn-more)
         - [Queueing PDF](#queueing-pdf)
+        - [Prerendering Templates](#prerendering-templates)
 - [Credits](#credits)
 ___
 
@@ -610,6 +611,47 @@ This allows you to:
 - push lightweight PDF jobs into a queue
 - reconstruct the full PDF definition in a worker
 - generate the PDF asynchronously using any registered generator
+
+### Prerendering Templates
+
+Some PDF parameters (such as `Template`, `Header`, `Footer`, or custom parameters) may contain a `TemplateInterface` instead of raw HTML. These parameters implement `TemplateAwareInterface`, which allows you to detect and render templates before generating the final PDF.
+
+Normally, when generating a PDF directly, PDF generators will render templates automatically. However, there are situations where you may want to prerender templates yourself:
+
+- When queueing a PDF job and you want the job payload to contain only final HTML  
+- When running PDF generation in an isolated or restricted environment  
+- When you want to avoid executing template logic outside your main application  
+- When you want to serialize parameters safely without relying on autowiring a custom PDF class  
+- When you want to ensure deterministic HTML output before passing it to the PDF engine  
+
+Below is an example of prerendering templates before queueing a PDF job:
+
+```php
+use Tobento\Service\Pdf\Parameter\Parameters;
+use Tobento\Service\Pdf\PdfInterface;
+use Tobento\Service\Pdf\RendererInterface;
+use Tobento\Service\Pdf\TemplateAwareInterface;
+
+protected function renderTemplates(PdfInterface $pdf, RendererInterface $renderer): PdfInterface
+{
+    $parameters = new Parameters();
+
+    foreach ($pdf->parameters() as $parameter) {
+
+        if (
+            $parameter instanceof TemplateAwareInterface
+            && $parameter->template()
+        ) {
+            $rendered = $renderer->renderTemplate($parameter->template());
+            $parameter = $parameter->withRenderedHtml($rendered);
+        }
+
+        $parameters->add($parameter);
+    }
+
+    return new Pdf()->withParameters($parameters);
+}
+```
 
 # Credits
 
