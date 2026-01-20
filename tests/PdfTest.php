@@ -31,6 +31,23 @@ class PdfTest extends TestCase
         $this->assertInstanceOf(PdfInterface::class, $pdf);
     }
 
+    public function testNameMethods()
+    {
+        $pdf = new Pdf();
+
+        // Default name should fall back to the class name
+        $this->assertSame(Pdf::class, $pdf->getName());
+
+        // Setting a custom name should override the default
+        $pdf->name('invoice');
+        $this->assertSame('invoice', $pdf->getName());
+
+        // Ensure fluent interface returns the same instance
+        $returned = $pdf->name('report');
+        $this->assertSame($pdf, $returned);
+        $this->assertSame('report', $pdf->getName());
+    }
+
     public function testParametersAreLazyInitialized()
     {
         $pdf = new Pdf();
