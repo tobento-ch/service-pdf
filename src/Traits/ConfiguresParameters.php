@@ -22,6 +22,15 @@ use Tobento\Service\Pdf\TemplateInterface;
 trait ConfiguresParameters
 {
     /**
+     * Set PDF name.
+     */
+    public function name(string $name): static
+    {
+        $this->parameters()->add(new Parameter\Name(name: $name));
+        return $this;
+    }
+    
+    /**
      * Set paper size.
      */
     public function paper(Paper $paper): static
