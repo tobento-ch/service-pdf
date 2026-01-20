@@ -13,6 +13,7 @@ The PDF service offers a set of interfaces for creating, streaming, and download
         - [Streaming Pdf](#streaming-pdf)
         - [Downloading Pdf](#downloading-pdf)
     - [Pdf](#pdf)
+        - [Name](#name)
         - [Contents](#contents)
         - [Headers and Footers](#headers-and-footers)
         - [Page Setup](#page-setup)
@@ -148,6 +149,25 @@ Check out the available [Pdf Generators](#pdf-generator) to explore the differen
 
 The `Pdf` object provides a fluent API for building PDF documents.  
 You can add content, configure layout, and then generate the final PDF using a [PDF Generator](#pdf-generator).
+
+### Name
+
+You may assign a logical name to a PDF.  
+This name identifies the PDF within your application domain (e.g. "invoice", "report", "contract") and is useful for event handling, conditional logic, routing, or analytics.
+
+By default, if no name is set, the class name is returned:
+
+```php
+use Tobento\Service\Pdf\Pdf;
+
+$pdf = new Pdf();
+
+echo $pdf->getName(); // Tobento\Service\Pdf\Pdf
+
+$pdf->name('invoice');
+
+echo $pdf->getName(); // invoice
+```
 
 ### Contents
 
