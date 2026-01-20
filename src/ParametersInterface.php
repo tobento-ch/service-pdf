@@ -47,6 +47,13 @@ interface ParametersInterface extends IteratorAggregate, JsonSerializable, Strin
     public function first(): null|ParameterInterface;
     
     /**
+     * Returns the last parameter of null if none.
+     *
+     * @return null|ParameterInterface
+     */
+    public function last(): null|ParameterInterface;
+    
+    /**
      * Returns the parameters.
      *
      * @return array<int, ParameterInterface>

@@ -79,6 +79,22 @@ class Parameters implements ParametersInterface
     }
     
     /**
+     * Returns the last parameter of null if none.
+     *
+     * @return null|ParameterInterface
+     */
+    public function last(): null|ParameterInterface
+    {
+        $key = array_key_last($this->parameters);
+        
+        if (is_null($key)) {
+            return null;
+        }
+        
+        return $this->parameters[$key];    
+    }
+    
+    /**
      * Returns the parameters.
      *
      * @return array<int, ParameterInterface>
