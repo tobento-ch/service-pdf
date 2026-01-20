@@ -82,6 +82,23 @@ class ParametersTest extends TestCase
 
         $this->assertNull($params->first());
     }
+    
+    public function testLastReturnsLastParameter()
+    {
+        $p1 = new Html('A');
+        $p2 = new PageBreak();
+
+        $params = new Parameters($p1, $p2);
+
+        $this->assertSame($p2, $params->last());
+    }
+
+    public function testLastReturnsNullWhenEmpty()
+    {
+        $params = new Parameters();
+
+        $this->assertNull($params->last());
+    }
 
     public function testIteratorReturnsArrayIterator()
     {
