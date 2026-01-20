@@ -16,6 +16,17 @@ namespace Tobento\Service\Pdf;
 interface PdfInterface
 {
     /**
+     * Returns the logical name of the PDF.
+     *
+     * This name identifies the PDF within the application domain
+     * (e.g. "invoice", "report", "contract") and is intended for
+     * event handling, conditional logic, routing, or analytics.
+     *
+     * @return string
+     */
+    public function getName(): string;
+    
+    /**
      * Returns the parameters describing the PDF behavior.
      *
      * Parameters are used to configure PDF generation (e.g. paper size,
