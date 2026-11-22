@@ -35,6 +35,8 @@ class FakeMpdf
     public array $calls = [];
     public string $output = 'PDF_BINARY';
     public bool $showWatermarkText = false;
+    public mixed $HTMLFooter = '';
+    public mixed $HTMLFooterE = '';
 
     public function __construct(array $config = [])
     {
@@ -58,14 +60,18 @@ class FakeMpdf
         $this->calls[] = ['SetHTMLHeader', $html];
     }
 
-    public function SetHTMLFooter($html)
+    public function SetHTMLFooter($html, $OE = '')
     {
-        $this->calls[] = ['SetHTMLFooter', $html];
+        $this->calls[] = ['SetHTMLFooter', $html, $OE];
     }
 
     public function SetFooter($html)
     {
         $this->calls[] = ['SetFooter', $html];
+        
+        // like mPDF, creates the html of the default footer:
+        $this->HTMLFooter = ['html' => '<div>'.$html.'</div>'];
+        $this->HTMLFooterE = ['html' => '<div>'.$html.'</div>'];
     }
 
     public function SetCompression($flag)
@@ -212,7 +218,6 @@ class PdfGeneratorTest extends TestCase
 
         $this->assertContains('SetHTMLHeader', $calls);
         $this->assertContains('SetHTMLFooter', $calls);
-        $this->assertContains('SetFooter', $calls);
         $this->assertContains('SetCompression', $calls);
         $this->assertContains('SetWatermarkText', $calls);
         $this->assertContains('SetProtection', $calls);
@@ -224,6 +229,119 @@ class PdfGeneratorTest extends TestCase
         $this->assertContains('AddPage', $calls);
     }
 
+    public function testNumericFontWeightsAreNormalized()
+    {
+        $pdf = new Pdf();
+        $pdf->header('<p style="font-weight: 700">Header</p>');
+        $pdf->footer('<p style="font-weight:300">Footer</p>');
+        $pdf->html('<style>.title {font-weight: 600}</style><p style="font-weight: 900">Html</p>');
+        
+        $gen = $this->generator();
+        $gen->generate($pdf);
+        
+        $calls = \Mpdf\Mpdf::$lastInstance->calls;
+        $html = array_column($calls, 1, 0);
+        
+        $this->assertSame('<p style="font-weight: bold">Header</p>', $html['SetHTMLHeader']);
+        $this->assertSame('<p style="font-weight: normal">Footer</p>', $html['SetHTMLFooter']);
+        $this->assertSame(
+            '<style>.title {font-weight: bold}</style><p style="font-weight: bold">Html</p>',
+            $html['WriteHTML']
+        );
+    }
+    
+    public function testPaginationOnlyUsesDefaultFooter()
+    {
+        $pdf = new Pdf();
+        $pdf->pagination('{PAGE}/{PAGES}');
+        
+        $gen = $this->generator();
+        $gen->generate($pdf);
+        
+        $calls = \Mpdf\Mpdf::$lastInstance->calls;
+        $html = array_column($calls, 1, 0);
+        
+        $this->assertSame('{PAGENO}/{nbpg}', $html['SetFooter']);
+        $this->assertNotContains('SetHTMLFooter', array_column($calls, 0));
+    }
+    
+    public function testPaginationIsAddedBelowFooter()
+    {
+        $pdf = new Pdf();
+        $pdf->pagination('{PAGE}/{PAGES}');
+        $pdf->footer('<p>Footer</p>');
+        
+        $gen = $this->generator();
+        $gen->generate($pdf);
+        
+        $calls = \Mpdf\Mpdf::$lastInstance->calls;
+        $footerCalls = array_values(array_filter($calls, fn (array $call): bool => $call[0] === 'SetHTMLFooter'));
+        
+        // the default footer of mPDF with the pagination is added below the footer, for odd and even pages:
+        $this->assertSame(['SetFooter', '{PAGENO}/{nbpg}'], array_values(array_filter($calls, fn (array $call): bool => $call[0] === 'SetFooter'))[0]);
+        $this->assertSame([
+            ['SetHTMLFooter', '<p>Footer</p><div>{PAGENO}/{nbpg}</div>', 'O'],
+            ['SetHTMLFooter', '<p>Footer</p><div>{PAGENO}/{nbpg}</div>', 'E'],
+        ], $footerCalls);
+    }
+    
+    public function testPagePlaceholdersInHeaderAndFooterAreTranslated()
+    {
+        $pdf = new Pdf();
+        $pdf->header('<p>{PAGE}/{PAGES}</p>');
+        $pdf->footer('<p>Page {PAGE} of {PAGES}</p>');
+        
+        $gen = $this->generator();
+        $gen->generate($pdf);
+        
+        $html = array_column(\Mpdf\Mpdf::$lastInstance->calls, 1, 0);
+        
+        $this->assertSame('<p>{PAGENO}/{nbpg}</p>', $html['SetHTMLHeader']);
+        $this->assertSame('<p>Page {PAGENO} of {nbpg}</p>', $html['SetHTMLFooter']);
+    }
+    
+    public function testTextIsEscaped()
+    {
+        $pdf = new Pdf();
+        $pdf->text('Price: a<b & "c" <you@example.com>');
+        
+        $gen = $this->generator();
+        $gen->generate($pdf);
+        
+        $html = array_column(\Mpdf\Mpdf::$lastInstance->calls, 1, 0);
+        
+        $this->assertSame('Price: a&lt;b &amp; &quot;c&quot; &lt;you@example.com&gt;', $html['WriteHTML']);
+    }
+    
+    public function testTextKeepsLineBreaks()
+    {
+        $pdf = new Pdf();
+        $pdf->text("line1\nline2");
+        
+        $gen = $this->generator();
+        $gen->generate($pdf);
+        
+        $html = array_column(\Mpdf\Mpdf::$lastInstance->calls, 1, 0);
+        
+        $this->assertSame("line1<br />\nline2", $html['WriteHTML']);
+    }
+    
+    public function testHeaderAndFooterAreSetBeforeContent()
+    {
+        $pdf = new Pdf();
+        $pdf->html('<p>Content</p>');
+        $pdf->header('<p>Header</p>');
+        $pdf->footer('<p>Footer</p>');
+        
+        $gen = $this->generator();
+        $gen->generate($pdf);
+        
+        $calls = array_column(\Mpdf\Mpdf::$lastInstance->calls, 0);
+        
+        $this->assertLessThan(array_search('WriteHTML', $calls), array_search('SetHTMLHeader', $calls));
+        $this->assertLessThan(array_search('WriteHTML', $calls), array_search('SetHTMLFooter', $calls));
+    }
+    
     public function testGenerateThrowsPdfGenerationException()
     {
         $this->expectException(PdfGenerationException::class);
