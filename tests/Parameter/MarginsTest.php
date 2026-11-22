@@ -15,6 +15,7 @@ namespace Tobento\Service\Pdf\Test\Parameter;
 
 use JsonSerializable;
 use PHPUnit\Framework\TestCase;
+use Tobento\Service\Pdf\Exception\ParametersException;
 use Tobento\Service\Pdf\Parameter\Margins;
 use Tobento\Service\Pdf\ParameterInterface;
 
@@ -71,5 +72,27 @@ class MarginsTest extends TestCase
             ],
             $margins->jsonSerialize()
         );
+    }
+    
+    public function testMillimetersAreAccepted()
+    {
+        $margins = new Margins(top: '10', right: '10.5mm', bottom: 0, left: '0mm');
+        
+        $this->assertSame('10', $margins->top());
+        $this->assertSame('10.5mm', $margins->right());
+        $this->assertSame(0, $margins->bottom());
+        $this->assertSame('0mm', $margins->left());
+    }
+    
+    public function testOtherUnitsThrowParametersException()
+    {
+        foreach (['1cm', '0.5in', '20px', '2rem', ' 10mm', 'abc', ''] as $margin) {
+            try {
+                new Margins(left: $margin);
+                $this->fail(sprintf('No exception thrown for "%s".', $margin));
+            } catch (ParametersException $e) {
+                $this->assertStringContainsString('left margin', $e->getMessage());
+            }
+        }
     }
 }
