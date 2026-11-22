@@ -1,6 +1,6 @@
 {
     "name": "tobento/service-pdf",
-    "version": "2.0.3",
+    "version": "2.0.4",
     "type": "library",
     "description": "A flexible and extensible PDF generation service built around clean interfaces and parameter objects.",
     "keywords": [
@@ -25,6 +25,7 @@
         "psr/http-factory": "^1.0",
         "mpdf/mpdf": "^8.2",
         "tobento/service-autowire": "^2.0",
+        "tobento/service-support": "^2.0",
         "tobento/service-view": "^2.0",
         "tobento/service-filesystem": "^2.0",
         "tijsverkoyen/css-to-inline-styles": "^2.3"
