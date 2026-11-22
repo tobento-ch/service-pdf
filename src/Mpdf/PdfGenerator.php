@@ -162,9 +162,69 @@ class PdfGenerator implements PdfGeneratorInterface
      */
     protected function applyParameters(PdfInterface $pdf, Mpdf $mpdf): void
     {
+        $header = null;
+        $footer = null;
+        $pagination = null;
+        
+        foreach($pdf->parameters() as $parameter) {
+            if ($parameter instanceof Parameter\Header) {
+                $header = $parameter;
+            } elseif ($parameter instanceof Parameter\Footer) {
+                $footer = $parameter;
+            } elseif ($parameter instanceof Parameter\Pagination) {
+                $pagination = $parameter;
+            }
+        }
+        
+        // the header and footer must be set before the content, so they are on every page:
+        if ($header) {
+            $content = $this->resolveContent($header->html());
+            $mpdf->SetHTMLHeader($this->normalizeContent($this->translatePaginationFormat($content)));
+        }
+        
+        $this->applyFooter($mpdf, $footer, $pagination);
+        
         foreach($pdf->parameters() as $parameter) {
             $this->applyParameter($parameter, $mpdf);
         }
+    }
+    
+    /**
+     * Applies the footer and the pagination to mPDF.
+     * As mPDF has only one footer, the pagination is added below the footer if both are set.
+     */
+    protected function applyFooter(
+        Mpdf $mpdf,
+        null|Parameter\Footer $footer,
+        null|Parameter\Pagination $pagination,
+    ): void {
+        if ($pagination) {
+            // mPDF creates its default footer with the pagination:
+            $mpdf->SetFooter($this->translatePaginationFormat($pagination->format()));
+        }
+        
+        if (is_null($footer)) {
+            return;
+        }
+        
+        $html = $this->resolveContent($footer->html());
+        $html = $this->normalizeContent($this->translatePaginationFormat($html));
+        
+        // add the default footer with the pagination below, so it looks the same as without a footer:
+        $mpdf->SetHTMLFooter($html.$this->footerHtml($mpdf->HTMLFooter), 'O');
+        $mpdf->SetHTMLFooter($html.$this->footerHtml($mpdf->HTMLFooterE), 'E');
+    }
+    
+    /**
+     * Returns the html of the given mPDF footer, or an empty string if none is set.
+     */
+    protected function footerHtml(mixed $footer): string
+    {
+        if (is_array($footer) && is_string($footer['html'] ?? null)) {
+            return $footer['html'];
+        }
+        
+        return '';
     }
     
     /**
@@ -175,21 +235,6 @@ class PdfGenerator implements PdfGeneratorInterface
         switch (true) {
             case $parameter instanceof Parameter\Compression:
                 $mpdf->SetCompression($parameter->level() > 0);
-                break;
-
-            case $parameter instanceof Parameter\Header:
-                $content = $this->resolveContent($parameter->html());
-                $mpdf->SetHTMLHeader($content);
-                break;
-
-            case $parameter instanceof Parameter\Footer:
-                $content = $this->resolveContent($parameter->html());
-                $mpdf->SetHTMLFooter($content);
-                break;
-
-            case $parameter instanceof Parameter\Pagination:
-                $format = $this->translatePaginationFormat($parameter->format());
-                $mpdf->SetFooter($format);
                 break;
 
             case $parameter instanceof Parameter\Watermark:
@@ -217,15 +262,15 @@ class PdfGenerator implements PdfGeneratorInterface
                 break;
 
             case $parameter instanceof Parameter\Template:
-                $mpdf->WriteHTML($this->renderer->renderTemplate($parameter->template()));
+                $mpdf->WriteHTML($this->normalizeContent($this->renderer->renderTemplate($parameter->template())));
                 break;
                 
             case $parameter instanceof Parameter\Html:
-                $mpdf->WriteHTML($parameter->html());
+                $mpdf->WriteHTML($this->normalizeContent($parameter->html()));
                 break;
                 
             case $parameter instanceof Parameter\Text:
-                $mpdf->WriteHTML($parameter->text());
+                $mpdf->WriteHTML(nl2br(htmlspecialchars($parameter->text(), ENT_QUOTES, 'UTF-8')));
                 break;
                 
             case $parameter instanceof Parameter\PageBreak:
@@ -250,6 +295,27 @@ class PdfGenerator implements PdfGeneratorInterface
     }
     
     /**
+     * Normalizes the html for mPDF.
+     */
+    protected function normalizeContent(string $html): string
+    {
+        return $this->normalizeFontWeights($html);
+    }
+    
+    /**
+     * Normalizes numeric font weights, as mPDF only supports bold and normal.
+     * 600 to 900 become bold, 100 to 500 become normal.
+     */
+    protected function normalizeFontWeights(string $html): string
+    {
+        return preg_replace_callback(
+            '/font-weight\s*:\s*([1-9]00)\b/i',
+            static fn (array $matches): string => 'font-weight: '.($matches[1] >= '600' ? 'bold' : 'normal'),
+            $html
+        ) ?? $html;
+    }
+    
+    /**
      * Normalize a margin value into a numeric float for mPDF.
      */
     protected function normalizeMargin(int|string|null $value): float
@@ -269,7 +335,7 @@ class PdfGenerator implements PdfGeneratorInterface
     }
     
     /**
-     * Translate pagination format.
+     * Translates the {PAGE} and {PAGES} placeholders, e.g. of the pagination format, header or footer.
      */    
     protected function translatePaginationFormat(string $format): string
     {
