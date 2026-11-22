@@ -14,27 +14,41 @@ declare(strict_types=1);
 namespace Tobento\Service\Pdf\Parameter;
 
 use JsonSerializable;
+use Tobento\Service\Pdf\Exception\ParametersException;
 use Tobento\Service\Pdf\ParameterInterface;
 
 /**
- * Defines the page margins.
+ * Defines the page margins in millimeters.
  */
 class Margins implements ParameterInterface, JsonSerializable
 {
     /**
      * Create a new Margins instance.
      *
-     * @param null|int|string $top
-     * @param null|int|string $right
-     * @param null|int|string $bottom
-     * @param null|int|string $left
+     * @param null|int|string $top In millimeters, e.g. 10 or '10mm'.
+     * @param null|int|string $right In millimeters, e.g. 10 or '10mm'.
+     * @param null|int|string $bottom In millimeters, e.g. 10 or '10mm'.
+     * @param null|int|string $left In millimeters, e.g. 10 or '10mm'.
+     * @throws ParametersException If a margin is not in millimeters.
      */
     public function __construct(
         protected null|int|string $top = null,
         protected null|int|string $right = null,
         protected null|int|string $bottom = null,
         protected null|int|string $left = null,
-    ) {}
+    ) {
+        $margins = ['top' => $top, 'right' => $right, 'bottom' => $bottom, 'left' => $left];
+        
+        foreach ($margins as $name => $margin) {
+            if (is_string($margin) && !preg_match('/^\d+(\.\d+)?(mm)?$/', $margin)) {
+                throw new ParametersException(sprintf(
+                    'The %s margin "%s" must be in millimeters, e.g. "10" or "10mm".',
+                    $name,
+                    $margin
+                ));
+            }
+        }
+    }
 
     /**
      * Returns the top margin.
