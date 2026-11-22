@@ -16,6 +16,7 @@ namespace Tobento\Service\Pdf;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use Tobento\Service\Support\ContentDisposition;
 
 /**
  * Factory responsible for creating PSR-7 responses
@@ -49,15 +50,19 @@ class PdfResponseFactory implements PdfResponseFactoryInterface
      *
      * @param PdfInterface $pdf The PDF definition to generate.
      * @param string $filename The suggested filename for the download.
+     * @param bool $inline If true, the PDF is displayed in the browser instead of being downloaded.
      * @return ResponseInterface A PSR-7 response containing the PDF stream.
      */
-    public function download(PdfInterface $pdf, string $filename = 'document.pdf'): ResponseInterface
-    {
+    public function download(
+        PdfInterface $pdf,
+        string $filename = 'document.pdf',
+        bool $inline = false,
+    ): ResponseInterface {
         $stream = $this->generator->stream($pdf);
 
         $response = $this->responseFactory->createResponse(200)
             ->withHeader('Content-Type', 'application/pdf')
-            ->withHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->withHeader('Content-Disposition', ContentDisposition::header($filename, $inline))
             ->withBody($stream);
 
         return $response;

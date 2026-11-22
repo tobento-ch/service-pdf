@@ -27,8 +27,13 @@ interface PdfResponseFactoryInterface
      *
      * @param PdfInterface $pdf The PDF definition to generate.
      * @param string $filename The suggested filename for the download.
+     * @param bool $inline If true, the PDF is displayed in the browser instead of being downloaded.
      * @return ResponseInterface A PSR-7 response containing the PDF stream.
      * @throws PdfGenerationException If PDF generation fails.
      */
-    public function download(PdfInterface $pdf, string $filename = 'document.pdf'): ResponseInterface;
+    public function download(
+        PdfInterface $pdf,
+        string $filename = 'document.pdf',
+        bool $inline = false,
+    ): ResponseInterface;
 }
