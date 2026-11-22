@@ -134,12 +134,15 @@ class SomeService
         $response = $pdfResponseFactory->download(
             pdf: $pdf,
             filename: 'document.pdf',
+            inline: false, // optional, default is false
         );
 
         // Return or emit the response depending on your framework.
     }
 }
 ```
+
+Set ```inline``` to ```true``` to display the PDF in the browser instead of downloading it.
 
 Check out the [Pdf](#pdf) to learn more about building PDF content.
 
@@ -251,6 +254,15 @@ $pdf = new Pdf()
     ->header(new Template(name: 'inc/header', data: []));
 ```
 
+You may use the ```{PAGE}``` and ```{PAGES}``` placeholders in the header and footer to display page numbers where you want them:
+
+```php
+use Tobento\Service\Pdf\Pdf;
+
+$pdf = new Pdf()
+    ->footer('<p>Example Shop, Main Street 1, 1000 City</p><p class="text-right">{PAGE}/{PAGES}</p>');
+```
+
 ### Page Setup
 
 Configure the page layout of your PDF, including paper size, orientation, margins, DPI, and custom dimensions.
@@ -267,7 +279,7 @@ $pdf = new Pdf()
     // Set orientation:
     ->orientation(Orientation::Landscape)
 
-    // Set margins:
+    // Set margins in millimeters, e.g. '10' or '10mm':
     ->margins(
         top: '10mm',
         right: '10mm',
@@ -322,6 +334,8 @@ $pdf = new Pdf()
     // Set pagination format:
     ->pagination('{PAGE}/{PAGES}');
 ```
+
+The pagination is displayed in the footer. If a footer is set too, the pagination is displayed below the footer. To place the page numbers yourself, use the placeholders in the [header or footer](#headers-and-footers) instead.
 
 ### Document Info
 
