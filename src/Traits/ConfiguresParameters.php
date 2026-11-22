@@ -15,6 +15,7 @@ namespace Tobento\Service\Pdf\Traits;
 
 use Tobento\Service\Pdf\Enums\Paper;
 use Tobento\Service\Pdf\Enums\Orientation;
+use Tobento\Service\Pdf\Exception\ParametersException;
 use Tobento\Service\Pdf\Parameter;
 use Tobento\Service\Pdf\Template;
 use Tobento\Service\Pdf\TemplateInterface;
@@ -49,7 +50,9 @@ trait ConfiguresParameters
     }
 
     /**
-     * Set margins.
+     * Set margins in millimeters, e.g. '10' or '10mm'.
+     *
+     * @throws ParametersException If a margin is not in millimeters.
      */
     public function margins(string $top, string $right, string $bottom, string $left): static
     {
