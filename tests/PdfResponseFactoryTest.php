@@ -51,7 +51,10 @@ class PdfResponseFactoryTest extends TestCase
 
         // Headers
         $this->assertSame('application/pdf', $response->getHeaderLine('Content-Type'));
-        $this->assertSame('attachment; filename="test.pdf"', $response->getHeaderLine('Content-Disposition'));
+        $this->assertSame(
+            "attachment; filename=\"test.pdf\"; filename*=UTF-8''test.pdf",
+            $response->getHeaderLine('Content-Disposition')
+        );
 
         // Body is the generator's stream
         $this->assertSame('', (string)$response->getBody());
@@ -76,7 +79,44 @@ class PdfResponseFactoryTest extends TestCase
         $response = $factory->download($this->pdf());
 
         $this->assertSame(
-            'attachment; filename="document.pdf"',
+            "attachment; filename=\"document.pdf\"; filename*=UTF-8''document.pdf",
+            $response->getHeaderLine('Content-Disposition')
+        );
+    }
+    
+    public function testDownloadInline()
+    {
+        $streamFactory = new Psr17Factory();
+        
+        $factory = new PdfResponseFactory(
+            generator: new NullPdfGenerator(streamFactory: $streamFactory, name: 'null'),
+            streamFactory: $streamFactory,
+            responseFactory: new Psr17Factory(),
+        );
+        
+        $response = $factory->download($this->pdf(), 'test.pdf', inline: true);
+        
+        $this->assertSame('application/pdf', $response->getHeaderLine('Content-Type'));
+        $this->assertSame(
+            "inline; filename=\"test.pdf\"; filename*=UTF-8''test.pdf",
+            $response->getHeaderLine('Content-Disposition')
+        );
+    }
+    
+    public function testDownloadWithUtf8Filename()
+    {
+        $streamFactory = new Psr17Factory();
+        
+        $factory = new PdfResponseFactory(
+            generator: new NullPdfGenerator(streamFactory: $streamFactory, name: 'null'),
+            streamFactory: $streamFactory,
+            responseFactory: new Psr17Factory(),
+        );
+        
+        $response = $factory->download($this->pdf(), 'Rechnung "Müller".pdf');
+        
+        $this->assertSame(
+            "attachment; filename=\"rechnung-mueller.pdf\"; filename*=UTF-8''Rechnung%20%22M%C3%BCller%22.pdf",
             $response->getHeaderLine('Content-Disposition')
         );
     }
